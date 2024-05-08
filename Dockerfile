@@ -1,20 +1,21 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
+FROM mcr.microsoft.com/dotnet/sdk:4.0 AS builder
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
-WORKDIR /src
-COPY ["MyApp/MyApp.csproj", "MyApp/"]
-RUN dotnet restore "MyApp/MyApp.csproj"
+# caches restore result by copying csproj file separately
+COPY *.csproj .
+RUN dotnet restore
+
 COPY . .
-WORKDIR "/src/MyApp"
-RUN dotnet build "MyApp.csproj" -c Release -o /app/build
+RUN dotnet publish --output /app/ --configuration Release --no-restore
+RUN sed -n 's:.*<AssemblyName>\(.*\)</AssemblyName>.*:\1:p' *.csproj > __assemblyname
+RUN if [ ! -s __assemblyname ]; then filename=$(ls *.csproj); echo ${filename%.*} > __assemblyname; fi
 
-FROM build AS publish
-RUN dotnet publish "MyApp.csproj" -c Release -o /app/publish
-
-FROM base AS final
+# Stage 2
+FROM mcr.microsoft.com/dotnet/aspnet:4.0
 WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "MyApp.dll"]
+COPY --from=builder /app .
+
+ENV PORT 5000
+EXPOSE 5000
+
+ENTRYPOINT dotnet $(cat /app/__assemblyname).dll --urls "http://*:5000"
