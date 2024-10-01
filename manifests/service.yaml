@@ -1,13 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: testworkflow1
-  namespace: namespace-workflow-1715194506205
+  name: wytestwf2
+  namespace: namespace-workflow-1727802546886
+  labels:
+    kubernetes.azure.com/generator: devhub
 spec:
   type: LoadBalancer
   selector:
-    app: testworkflow1
+    app: wytestwf2
   ports:
     - protocol: TCP
-      port: 5000
-      targetPort: 5000
+      port: 80
+      targetPort: 80

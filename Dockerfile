@@ -1,21 +1,14 @@
-FROM mcr.microsoft.com/dotnet/sdk:4.0 AS builder
-WORKDIR /app
+FROM golang:1.23 AS builder
+ENV PORT 80
+EXPOSE 80
 
-# caches restore result by copying csproj file separately
-COPY *.csproj .
-RUN dotnet restore
-
+WORKDIR /build
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
 COPY . .
-RUN dotnet publish --output /app/ --configuration Release --no-restore
-RUN sed -n 's:.*<AssemblyName>\(.*\)</AssemblyName>.*:\1:p' *.csproj > __assemblyname
-RUN if [ ! -s __assemblyname ]; then filename=$(ls *.csproj); echo ${filename%.*} > __assemblyname; fi
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o app-binary
 
-# Stage 2
-FROM mcr.microsoft.com/dotnet/aspnet:4.0
+FROM gcr.io/distroless/static-debian12
 WORKDIR /app
-COPY --from=builder /app .
-
-ENV PORT 5000
-EXPOSE 5000
-
-ENTRYPOINT dotnet $(cat /app/__assemblyname).dll --urls "http://*:5000"
+COPY --from=builder /build/app-binary . 
+CMD ["/app/app-binary"]
