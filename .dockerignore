@@ -1,4 +1,2 @@
 Dockerfile
 charts/
-bin/
-obj/
