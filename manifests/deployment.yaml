@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wy-test-workflow-1
+  labels:
+    app: wy-test-workflow-1
+    kubernetes.azure.com/generator: devhub
+  namespace: namespace-workflow-1734464720396
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wy-test-workflow-1
+  template:
+    metadata:
+      labels:
+        app: wy-test-workflow-1
+    spec:
+      containers:
+        - name: wy-test-workflow-1
+          image: wytest1217registry.azurecr.io/image-workflow-1734464720396:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
