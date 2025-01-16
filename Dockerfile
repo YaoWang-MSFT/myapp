@@ -1,20 +1,13 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
+FROM gradle:jdk19 as BUILD
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
-WORKDIR /src
-COPY ["MyApp/MyApp.csproj", "MyApp/"]
-RUN dotnet restore "MyApp/MyApp.csproj"
-COPY . .
-WORKDIR "/src/MyApp"
-RUN dotnet build "MyApp.csproj" -c Release -o /app/build
+COPY --chown=gradle:gradle . /project
+RUN gradle -i -s -b /project/build.gradle clean build
 
-FROM build AS publish
-RUN dotnet publish "MyApp.csproj" -c Release -o /app/publish
+FROM eclipse-temurin:19-jdk
+ENV PORT 8080
+EXPOSE 8080
 
-FROM base AS final
-WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "MyApp.dll"]
+COPY --from=BUILD /project/build/libs/* /opt/
+WORKDIR /opt/
+RUN ls -l
+CMD ["/bin/bash", "-c", "find -type f -name '*SNAPSHOT.jar' | xargs java -jar"]
