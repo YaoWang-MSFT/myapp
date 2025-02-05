@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wy-test-workflow-2-config
+  namespace: namespace-workflow-1738770881145
+  labels:
+    app.kubernetes.io/name: wy-test-workflow-2
+    kubernetes.azure.com/generator: devhub
+data:
